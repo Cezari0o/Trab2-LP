@@ -5,22 +5,14 @@ import Prelude hiding (lookup)
 
 type ErrorMessage = String
 
-{- Dica: somente o tipo de executeP precisa mudar conforme a sugestao abaixo, 
-   mas a sua definicao (corpo) pode ficar a mesma
-   executeP :: RContext -> Program  -> Either ErrorMessage RContext
--}
+-- Dado um contexto e um programa, executa o programa.
+-- Retorna o contexto resultante ou uma mensagem de erro de execucao.
 executeP :: RContext -> Program  -> Either ErrorMessage RContext
 executeP context (Prog stm) = execute context stm
    
 
-{- Dica: o tipo de execute deve mudar para 
- execute :: RContext -> Stm -> Either ErrorMessage RContext   
- Alem disso, o corpo dessa funcao deve ser modificado, pois eval
- retorna tipo diferente agora, ou seja, a avaliacao pode falhar
- e, consequentemente o execute tambem. Assim, todos tipos de comandos 
- serao afetados
--}
-
+-- Dado um contexto e um statement, executa o dado statement no contexto.
+-- Retorna o contexto resultante da execucao do statement ou uma mensagem de erro de execucao.
 execute :: RContext -> Stm -> Either ErrorMessage RContext
 execute context x = case x of
    SAss id exp -> case (eval context exp) of
@@ -68,6 +60,8 @@ getValorBool b = ValorBool b
 getValorStr :: String -> Valor
 getValorStr s = ValorStr s
 
+-- Funcao usada por eval. Dado um contexto, duas expressoes, uma operacao, um extrator do tipo (Valor -> t)
+-- e uma funcao getValor do tipo (t -> Valor), retorna (Either ErrorMessage Valor)
 getResult context exp0 exp operacao extratorT getValor = 
     case eval context exp0 of
         Left msg0 -> Left msg0
@@ -75,7 +69,8 @@ getResult context exp0 exp operacao extratorT getValor =
                                 Left msg1 -> Left msg1
                                 Right result1 -> Right (getValor((extratorT result0) `operacao` (extratorT result1))))
 
-
+-- Dado um contexto e uma expressao, retorna um valor ou uma mensagem de erro,
+-- resultante da execucao da expressao.
 eval :: RContext -> Exp -> Either ErrorMessage Valor
 eval context x = case x of 
     EAdd exp0 exp  -> getResult context exp0 exp (+) i getValorInt
@@ -127,17 +122,21 @@ instance Eq Valor where
  (ValorStr s1) == (ValorStr s2) =  s1 == s2
  (ValorBool b1) == (ValorBool b2) = b1 == b2
 
--- Dica: voce nao precisa mudar o codigo a partir daqui
 type RContext = [(String,Valor)]
 
 getStr :: Ident -> String
 getStr (Ident s) = s
 
+-- Procura o identificador dado pela string no contexto recebido.
+-- Retorna o valor associado ao identificador.
 lookup :: RContext -> String -> Valor
 lookup ((i,v):cs) s
    | i == s = v
    | otherwise = lookup cs s
 
+-- Atualiza o contexto, associando o identificador ao valor recebido
+-- caso o mesmo nao se encontre no contexto, ou atualizando o valor associado
+-- ao identificador.
 update :: RContext -> String -> Valor -> RContext
 update [] s v = [(s,v)]
 update ((i,v):cs) s nv

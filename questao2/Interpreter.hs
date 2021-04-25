@@ -3,10 +3,13 @@ module Interpreter where
 import AbsLI
 import Prelude hiding (lookup)
 
-
+-- Dado um contexto e um programa, executa o programa.
+-- Retorna o contexto resultante.
 executeP :: RContext -> Program  -> RContext
 executeP context (Prog stm) = execute context stm
    
+-- Dado um contexto e um statement, executa o dado statement no contexto.
+-- Retorna o contexto resultante da execucao do statement.
 execute :: RContext -> Stm -> RContext
 execute context x = case x of
    SAss id exp -> update context (getStr id) (eval context exp)
@@ -41,8 +44,8 @@ instance Eq Valor where
  (ValorStr s1) == (ValorStr s2) =  s1 == s2
  (ValorBool b1) == (ValorBool b2) = b1 == b2
 
-
--- note que a funcao eval retorna um Valor             
+-- Dado um contexto e uma expressao, retorna um valor,
+-- resultante da execucao da expressao.
 eval :: RContext -> Exp -> Valor
 eval context x = case x of 
     EAdd exp0 exp -> ValorInt ( i(eval context exp0) + i (eval context exp))
@@ -53,15 +56,11 @@ eval context x = case x of
     EInt n  -> ValorInt n
     EVar id  -> lookup context (getStr id)
     EStr str -> ValorStr str
-    -- adicione abaixo um padrao e comportamento associado a expressao Or
+    ----------------------------------------------------------------------------------
     EOr exp0 exp -> ValorBool ( b(eval context exp0) || b(eval context exp)) 
-    -- adicione abaixo um padrao e comportamento associado a expressao And
     EAnd exp0 exp -> ValorBool ( b(eval context exp0) && b(eval context exp) )
-    -- adicione abaixo um padrao e comportamento associado a expressao Not
     ENot exp -> ValorBool (not (b(eval context exp)))
-    -- adicione abaixo um padrao e comportamento associado ao literal true
     ETrue -> ValorBool True
-    -- adicione abaixo um padrao e comportamento associado ao literal false
     EFalse -> ValorBool False
     
 type RContext = [(String,Valor)]
@@ -69,11 +68,16 @@ type RContext = [(String,Valor)]
 getStr :: Ident -> String
 getStr (Ident s) = s
 
+-- Procura o identificador dado pela string no contexto recebido.
+-- Retorna o valor associado ao identificador.
 lookup :: RContext -> String -> Valor
 lookup ((i,v):cs) s
    | i == s = v
    | otherwise = lookup cs s
 
+-- Atualiza o contexto, associando o identificador ao valor recebido
+-- caso o mesmo nao se encontre no contexto, ou atualizando o valor associado
+-- ao identificador.
 update :: RContext -> String -> Valor -> RContext
 update [] s v = [(s,v)]
 update ((i,v):cs) s nv

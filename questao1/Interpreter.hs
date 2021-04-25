@@ -4,9 +4,13 @@ import AbsLI
 import Prelude hiding (lookup)
 
 
+-- Dado um contexto e um programa, executa o programa.
+-- Retorna o contexto resultante.
 executeP :: RContext -> Program  -> RContext
 executeP context (Prog stm) = execute context stm
    
+-- Dado um contexto e um statement, executa o dado statement no contexto.
+-- Retorna o contexto resultante da execucao do statement.
 execute :: RContext -> Stm -> RContext
 execute context x = case x of
    SAss id exp -> update context (getStr id) (eval context exp)
@@ -15,12 +19,13 @@ execute context x = case x of
    SWhile exp stm -> if ( (eval context exp) /= 0) 
                       then execute (execute context stm) (SWhile exp stm)
                       else context
-   SdoWhile stm exp -> execute (execute context stm) (SWhile exp stm) 
-   {- trate abaixo o caso de o comando "x" ser um comando "SdoWhile"
-    dica: uma solucao mais curta tem 1 linha, e uma solucao mais "longa" tem menos de 5 linhas
-   -}
-   
+   ---------------------------------------------------------------------------
+   -- O do/while abaixo executa o statement uma vez, e depois eh tratado como um while
+   SdoWhile stm exp -> execute (execute context stm) (SWhile exp stm)   
 
+
+-- Dado um contexto e uma expressao, retorna um inteiro,
+-- resultante da execucao da expressao.
 eval :: RContext -> Exp -> Integer
 eval context x = case x of
     EAdd exp0 exp  -> eval context exp0 + eval context exp
@@ -35,11 +40,16 @@ type RContext = [(String,Integer)]
 getStr :: Ident -> String
 getStr (Ident s) = s
 
+-- Procura o identificador dado pela string no contexto recebido.
+-- Retorna o inteiro associado ao identificador.
 lookup :: RContext -> String -> Integer
 lookup ((i,v):cs) s
    | i == s = v
    | otherwise = lookup cs s
 
+-- Atualiza o contexto, associando o identificador ao inteiro recebido
+-- caso o mesmo nao se encontre no contexto, ou atualizando o inteiro associado
+-- ao identificador.
 update :: RContext -> String -> Integer -> RContext
 update [] s v = [(s,v)]
 update ((i,v):cs) s nv
